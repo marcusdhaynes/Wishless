@@ -1,15 +1,11 @@
 {
   "schema_version": 1,
   "id": "wishless-cover-terrain-grass-20261115",
-  "description": "Cover the current loaded outdoor terrain and template ground with instanced, muted-green grass.",
+  "description": "Retired sparse V1 placement. Dense V2 replaces and cleans up V1 safely.",
   "operations": [
     {
-      "type": "scatter_grass",
-      "mesh": "/Game/WishlessGenerated/Vegetation/SM_WishlessGrass",
-      "spacing_cm": 125,
-      "max_instances": 30000,
-      "seed": 20261115,
-      "include_floor": true
+      "type": "ensure_folder",
+      "path": "/Game/WishlessGenerated/Vegetation"
     }
   ]
 }
