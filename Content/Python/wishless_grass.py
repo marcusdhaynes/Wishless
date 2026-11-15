@@ -14,6 +14,7 @@ import random
 from pathlib import Path
 
 import unreal
+from grass_hit import visible_ground_hit
 
 GRASS_DIR = "/Game/WishlessGenerated/Vegetation"
 MATERIAL = GRASS_DIR + "/M_WishlessGrass"
@@ -81,7 +82,7 @@ def _ensure_foliage(mesh):
     # Clamp visual distance, without coupling the operation to engine-specific enums.
     try:
         foliage.set_editor_property(
-            "cull_distance", unreal.Int32Interval(min=1800, max=9000))
+            "cull_distance", unreal.Int32Interval(min=3500, max=30000))
     except (AttributeError, TypeError, RuntimeError) as exc:
         unreal.log_warning("[WishlessGrass] Cull interval unavailable: " + str(exc))
     unreal.EditorAssetLibrary.save_loaded_asset(foliage)
@@ -104,7 +105,8 @@ def _surface_samples(world, surface, step, budget, seed, eligible_names):
     rng = random.Random(seed)
     # Covers the whole bounding rectangle, with a fixed seed and no expensive
     # square-meter-by-square-meter operations on vast landscapes.
-    indices = list(range(nx * ny))
+    # Avoid allocating a potentially enormous list for World Partition tiles.
+    indices = range(nx * ny)
     if len(indices) > count:
         indices = rng.sample(indices, count)
     transforms = []
@@ -118,17 +120,16 @@ def _surface_samples(world, surface, step, budget, seed, eligible_names):
             world, unreal.Vector(x, y, ztop), unreal.Vector(x, y, zbottom),
             unreal.TraceTypeQuery.TRACE_TYPE_QUERY1, False, [],
             unreal.DrawDebugTrace.NONE)
-        if not hit or not hit.get_editor_property("blocking_hit"):
+        result = visible_ground_hit(hit)
+        if result is None:
             continue
-        struck = hit.get_editor_property("hit_actor")
-        if struck is None or struck.get_path_name() not in eligible_names:
+        struck, up, point = result
+        if struck.get_path_name() not in eligible_names:
             # This also prevents grass penetrating buildings, roads represented
             # by blocking mesh actors, and other non-terrain objects.
             continue
-        up = hit.get_editor_property("impact_normal")
         if up.z < MIN_UP:
             continue
-        point = hit.get_editor_property("impact_point")
         scale = rng.uniform(0.78, 1.26)
         transforms.append(unreal.Transform(
             location=unreal.Vector(point.x, point.y, point.z - 2.0),
