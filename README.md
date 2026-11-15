@@ -51,16 +51,18 @@ For assets, commit source art/audio/mesh files under `SourceAssets/` and a JSON 
 
 The editor validates these operations again, imports them through Unreal's Asset Import Tasks API, and records completed manifests in `Saved/WishlessBridge/applied.json`. Generated assets under `Content/WishlessGenerated/` are not stored in Git; they are recreated by import. Version **hand-edited** `.uasset` and `.umap` files outside that folder using Git LFS.
 
-## Terrain grass (new)
+## Dense grass and natural breezes (V2)
 
-Grass source, foliage placement, and validation are now queued in `Automation/Queue/0003-grass-mesh.json` and `0004-cover-terrain-grass.json`. On editor startup (or when opening another eligible level), the bridge imports a lightweight grass mesh and scatters instanced foliage across loaded Landscape actors and designated ground surfaces, capped at 30,000 clumps per level. The material uses muted woodland green. This is a GitHub-side implementation: UE5 execution and visual quality are **not yet verified**. For eligibility, path exclusions, limitations, and confirmation steps, see [Docs/GRASS.md](Docs/GRASS.md).
+Current queue: `0005-import-dense-grass.json` imports the shared 96-triangle grass carpet; `0006-dense-grass-breezes.json` builds a texture-free grass material with root-anchored, world-coherent GPU gusts and densely tiles loaded outdoor ground (185 cm spacing, up to 110,000 patch instances). Old V1 scatter queue `0004` is retired. V2 preserves existing landscapes/materials, backs up the level and removes **only** Wishless's old foliage type. This is optimized to reuse one mesh and one material, not spawn separate grass actors or use per-blade CPU physics. **GitHub tests pass; Unreal editor import, rendering and memory are not yet independently verified.**
+
+For exact terrain rules, World Partition scalability, backup/safe replay and viewport verification: [Docs/GRASS.md](Docs/GRASS.md).
 
 ## Safety and limits
 
 - Only the `main` branch is used. The synchronizer **never** force-resets, rebases, or overwrites dirty local files. Unrelated local project files are preserved; overlapping incoming changes are blocked.
 - A running UE5 editor is signaled by a heartbeat written under `Saved/`. Only source art, automation queue, and docs are fast-forwarded while the editor is active.
 - **C++ code, loaded Blueprints, native Unreal asset packages and settings cannot be safely replaced live in all cases.** Close and reopen Unreal to receive these changes. C++ may require compilation.
-- The manifest interpreter accepts only `ensure_folder`, `import_asset`, and the narrowly scoped `scatter_grass` terrain operation; it rejects arbitrary command execution, path traversal, and imports outside `SourceAssets/` or `/Game/WishlessGenerated`.
+- The manifest interpreter accepts only `ensure_folder`, `import_asset`, and the narrowly scoped `scatter_grass` (V1 retired) and `dense_grass` terrain operations; it rejects arbitrary command execution, path traversal, and imports outside `SourceAssets/` or `/Game/WishlessGenerated`.
 - `python tools/wishless_sync.py once` checks once; `python tools/wishless_sync.py status` reports last status. Inspect `.wishless/status.json` for `updated`, `up_to_date`, `pending_editor_restart`, `blocked_local_changes`, `diverged`, or `lfs_error`.
 - GitHub Actions checks JSON, Python syntax, and Git safety tests; **it does not run UE5 or compile/package the game**. A functioning UE5 workstation is needed for final integration proof.
 - The GitHub repository is public. Never commit secrets, keys, proprietary licensed engine content, or materials you do not have distribution rights to.
