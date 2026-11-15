@@ -6,7 +6,7 @@ from pathlib import Path, PurePosixPath
 
 MAX_MANIFEST_BYTES = 256_000
 MAX_OPERATIONS = 100
-ALLOWED_IMPORT_EXTS = {".fbx", ".png", ".jpg", ".jpeg", ".tga", ".wav", ".mp3", ".ogg", ".glb", ".gltf"}
+ALLOWED_IMPORT_EXTS = {".obj", ".fbx", ".png", ".jpg", ".jpeg", ".tga", ".wav", ".mp3", ".ogg", ".glb", ".gltf"}
 SAFE_GAME_PATH = re.compile(r"^/Game/WishlessGenerated(?:/[A-Za-z0-9_]+)*$")
 SAFE_NAME = re.compile(r"^[A-Za-z][A-Za-z0-9_]{0,79}$")
 SAFE_ID = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_-]{2,99}$")
@@ -60,6 +60,21 @@ def validate_manifest(data: object) -> dict:
             if "asset_name" in op and (not isinstance(op["asset_name"], str)
                 or not SAFE_NAME.fullmatch(op["asset_name"])):
                 raise ManifestError("invalid asset_name")
+        elif op["type"] == "scatter_grass":
+            _check_keys(op, {"type", "mesh"}, {"spacing_cm", "max_instances", "seed", "include_floor"})
+            if op["mesh"] != "/Game/WishlessGenerated/Vegetation/SM_WishlessGrass":
+                raise ManifestError("scatter_grass accepts only the Wishless generated grass mesh")
+            if "spacing_cm" in op and (type(op["spacing_cm"]) not in (int, float)
+                or not 70 <= op["spacing_cm"] <= 500):
+                raise ManifestError("spacing_cm must be 70..500 cm")
+            if "max_instances" in op and (type(op["max_instances"]) is not int
+                or not 100 <= op["max_instances"] <= 60000):
+                raise ManifestError("max_instances must be 100..60000")
+            if "seed" in op and (type(op["seed"]) is not int
+                or not 0 <= op["seed"] <= 2147483647):
+                raise ManifestError("seed must be a nonnegative 32-bit integer")
+            if "include_floor" in op and type(op["include_floor"]) is not bool:
+                raise ManifestError("include_floor must be boolean")
         else:
             raise ManifestError(f"unsupported operation type: {op['type']!r}")
     return data
