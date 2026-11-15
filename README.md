@@ -14,7 +14,7 @@ You instruct ChatGPT
   → non-conflicting local changes: fast-forward only, no force reset
   → open UE editor: only source assets/automation/docs sync live
   → UE5 Python startup script monitors queue every 3 s
-  → supported operations import sources or create generated-content folders
+  → supported operations import sources, create folders, or scatter grass on eligible terrain
   → native assets/C++/settings wait for editor exit and safe restart
 ```
 
@@ -51,12 +51,16 @@ For assets, commit source art/audio/mesh files under `SourceAssets/` and a JSON 
 
 The editor validates these operations again, imports them through Unreal's Asset Import Tasks API, and records completed manifests in `Saved/WishlessBridge/applied.json`. Generated assets under `Content/WishlessGenerated/` are not stored in Git; they are recreated by import. Version **hand-edited** `.uasset` and `.umap` files outside that folder using Git LFS.
 
+## Terrain grass (new)
+
+Grass source, foliage placement, and validation are now queued in `Automation/Queue/0003-grass-mesh.json` and `0004-cover-terrain-grass.json`. On editor startup (or when opening another eligible level), the bridge imports a lightweight grass mesh and scatters instanced foliage across loaded Landscape actors and designated ground surfaces, capped at 30,000 clumps per level. The material uses muted woodland green. This is a GitHub-side implementation: UE5 execution and visual quality are **not yet verified**. For eligibility, path exclusions, limitations, and confirmation steps, see [Docs/GRASS.md](Docs/GRASS.md).
+
 ## Safety and limits
 
 - Only the `main` branch is used. The synchronizer **never** force-resets, rebases, or overwrites dirty local files. Unrelated local project files are preserved; overlapping incoming changes are blocked.
 - A running UE5 editor is signaled by a heartbeat written under `Saved/`. Only source art, automation queue, and docs are fast-forwarded while the editor is active.
 - **C++ code, loaded Blueprints, native Unreal asset packages and settings cannot be safely replaced live in all cases.** Close and reopen Unreal to receive these changes. C++ may require compilation.
-- The manifest interpreter accepts only `ensure_folder` and `import_asset`; it rejects arbitrary command execution, path traversal, and imports outside `SourceAssets/` or `/Game/WishlessGenerated`.
+- The manifest interpreter accepts only `ensure_folder`, `import_asset`, and the narrowly scoped `scatter_grass` terrain operation; it rejects arbitrary command execution, path traversal, and imports outside `SourceAssets/` or `/Game/WishlessGenerated`.
 - `python tools/wishless_sync.py once` checks once; `python tools/wishless_sync.py status` reports last status. Inspect `.wishless/status.json` for `updated`, `up_to_date`, `pending_editor_restart`, `blocked_local_changes`, `diverged`, or `lfs_error`.
 - GitHub Actions checks JSON, Python syntax, and Git safety tests; **it does not run UE5 or compile/package the game**. A functioning UE5 workstation is needed for final integration proof.
 - The GitHub repository is public. Never commit secrets, keys, proprietary licensed engine content, or materials you do not have distribution rights to.
