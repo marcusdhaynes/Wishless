@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "id": "wishless-grass-carpet-wind-20261115",
+  "description": "Replace sparse grass with overlapping low-poly carpet, root-anchored world-coherent GPU gusts, strict instance budget.",
+  "operations": [
+    {
+      "type": "dense_grass",
+      "mesh": "/Game/WishlessGenerated/Vegetation/SM_WishlessGrassCarpet",
+      "spacing_cm": 185,
+      "max_instances": 110000,
+      "seed": 20261115
+    }
+  ]
+}
