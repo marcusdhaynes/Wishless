@@ -75,6 +75,21 @@ def validate_manifest(data: object) -> dict:
                 raise ManifestError("seed must be a nonnegative 32-bit integer")
             if "include_floor" in op and type(op["include_floor"]) is not bool:
                 raise ManifestError("include_floor must be boolean")
+        elif op["type"] == "dense_grass":
+            _check_keys(op, {"type", "mesh"}, {"spacing_cm", "max_instances", "seed"})
+            if op["mesh"] != "/Game/WishlessGenerated/Vegetation/SM_WishlessGrassCarpet":
+                raise ManifestError("dense_grass only accepts Wishless's generated carpet")
+            if "spacing_cm" in op and (
+                    type(op["spacing_cm"]) not in (int, float)
+                    or not 120 <= op["spacing_cm"] <= 225):
+                raise ManifestError("dense grass spacing must be 120..225 cm")
+            if "max_instances" in op and (
+                    type(op["max_instances"]) is not int
+                    or not 100 <= op["max_instances"] <= 180000):
+                raise ManifestError("dense grass count must be 100..180000")
+            if "seed" in op and (
+                    type(op["seed"]) is not int or not 0 <= op["seed"] <= 2147483647):
+                raise ManifestError("invalid dense grass seed")
         else:
             raise ManifestError(f"unsupported operation type: {op['type']!r}")
     return data
