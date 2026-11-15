@@ -30,6 +30,10 @@ def _apply_operation(op: dict) -> None:
     if op["type"] == "ensure_folder":
         unreal.EditorAssetLibrary.make_directory(op["path"])
         return
+    if op["type"] == "dense_grass":
+        from wishless_grass_dense import scatter_dense_grass
+        scatter_dense_grass(op)
+        return
     if op["type"] == "scatter_grass":
         from wishless_grass import scatter_grass
         scatter_grass(op)
@@ -68,7 +72,7 @@ def process_queue() -> None:
             # Grass is applied once per loaded map, not once per entire project.
             # Opening a different level can therefore apply the same declaration.
             manifest = load_manifest(item)
-            has_grass = any(op["type"] == "scatter_grass" for op in manifest["operations"])
+            has_grass = any(op["type"] in ("scatter_grass", "dense_grass") for op in manifest["operations"])
             world_name = unreal.EditorLevelLibrary.get_editor_world().get_path_name()
             applied_key = item.name + "::" + world_name if has_grass else item.name
             if applied.get(applied_key) == digest:
