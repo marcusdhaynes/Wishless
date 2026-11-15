@@ -16,6 +16,7 @@ SOURCE = ROOT / "SourceAssets"
 POLL_SECONDS = 3
 _last_scan = 0.0
 _tick_handle = None
+_error_history = {}
 sys.path.insert(0, str(ROOT / "tools"))
 from bridge_schema import ManifestError, load_manifest
 
@@ -78,7 +79,15 @@ def process_queue() -> None:
             _save_json(path, applied)
             unreal.log(f"[WishlessBridge] Applied: {manifest['id']}")
         except Exception as exc:
-            unreal.log_error(f"[WishlessBridge] {item.name}: {exc}")
+            # Missing terrain may be legitimate during first startup. Retry
+            # silently on subsequent ticks rather than flooding Output Log.
+            key = (item.name, unreal.EditorLevelLibrary.get_editor_world().get_path_name())
+            message = str(exc)
+            last_message, last_time = _error_history.get(key, ("", 0.0))
+            now = time.time()
+            if message != last_message or now - last_time >= 120:
+                unreal.log_error(f"[WishlessBridge] {item.name}: {exc}")
+                _error_history[key] = (message, now)
 
 def _tick(delta_time: float) -> None:
     global _last_scan
