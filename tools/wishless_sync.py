@@ -74,7 +74,11 @@ def sync_once(root: Path, *, fetch: bool = True) -> dict:
     if base != head:
         return status_file(root, {"state": "diverged", "reason": "Manual reconciliation required; no reset performed", "head": head})
     changes = git(root, "diff", "--name-only", "--diff-filter=ACDMRT", "HEAD", "refs/remotes/origin/main").splitlines()
-    if git(root, "status", "--porcelain", "--untracked-files=normal"):
+    # Preserve unrelated local project settings/assets; Git also rejects merge conflicts.
+    dirty = set(git(root, "diff", "--name-only", "HEAD").splitlines())
+    dirty.update(git(root, "ls-files", "--others", "--exclude-standard").splitlines())
+    if any(a == b or a.startswith(b + "/") or b.startswith(a + "/")
+           for a in dirty for b in changes):
         return status_file(root, {"state": "blocked_local_changes", "reason": "Commit/stash local changes; no overwrite performed", "head": head, "changed_files": changes})
     if editor_active(root) and not all(live_safe(p) for p in changes):
         return status_file(root, {"state": "pending_editor_restart", "reason": "Loaded UE assets/code/settings require editor restart", "head": head, "changed_files": changes})

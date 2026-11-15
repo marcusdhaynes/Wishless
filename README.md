@@ -11,7 +11,7 @@ You instruct ChatGPT
   → ChatGPT commits Wishless code/assets/automation to GitHub main
   → GitHub Actions validates JSON and Python tests
   → your Windows workstation polls origin/main (default 15 s)
-  → clean worktree: fast-forward only, no force reset
+  → non-conflicting local changes: fast-forward only, no force reset
   → open UE editor: only source assets/automation/docs sync live
   → UE5 Python startup script monitors queue every 3 s
   → supported operations import sources or create generated-content folders
@@ -53,7 +53,7 @@ The editor validates these operations again, imports them through Unreal's Asset
 
 ## Safety and limits
 
-- Only the `main` branch is used. The synchronizer **never** force-resets, rebases, or overwrites dirty local files.
+- Only the `main` branch is used. The synchronizer **never** force-resets, rebases, or overwrites dirty local files. Unrelated local project files are preserved; overlapping incoming changes are blocked.
 - A running UE5 editor is signaled by a heartbeat written under `Saved/`. Only source art, automation queue, and docs are fast-forwarded while the editor is active.
 - **C++ code, loaded Blueprints, native Unreal asset packages and settings cannot be safely replaced live in all cases.** Close and reopen Unreal to receive these changes. C++ may require compilation.
 - The manifest interpreter accepts only `ensure_folder` and `import_asset`; it rejects arbitrary command execution, path traversal, and imports outside `SourceAssets/` or `/Game/WishlessGenerated`.
@@ -73,3 +73,4 @@ The Wishless entry already exists in Somniel Holdings' Supabase project. No Supa
 - Epic recommendation to shut the editor before source-control sync of in-use files: https://dev.epicgames.com/documentation/unreal-engine/using-source-control-in-the-unreal-editor
 - Optional Git source-control editor UI: https://github.com/getnamo/GitSourceControl-Unreal
 - GitHub Unreal ignore template: https://github.com/github/gitignore/blob/main/UnrealEngine.gitignore
+

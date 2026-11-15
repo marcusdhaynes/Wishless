@@ -57,11 +57,19 @@ class GitSyncTests(unittest.TestCase):
         self.assertEqual((self.work / "Docs/test.md").read_text(), "abc")
 
     def test_dirty_worktree_blocks(self):
-        self.add_remote_commit("Docs/test.md", "abc")
+        self.add_remote_commit("local.txt", "remote")
         (self.work / "local.txt").write_text("unsaved")
         self.assertEqual(self.sync()["state"], "blocked_local_changes")
         self.assertFalse((self.work / "Docs/test.md").exists())
         self.assertTrue((self.work / "local.txt").exists())
+
+    def test_unrelated_local_project_preserved(self):
+        (self.work / "README.md").write_text("local settings")
+        (self.work / "local.txt").write_text("local content")
+        self.add_remote_commit("Docs/test.md", "abc")
+        self.assertEqual(self.sync()["state"], "updated")
+        self.assertEqual((self.work / "README.md").read_text(), "local settings")
+        self.assertEqual((self.work / "local.txt").read_text(), "local content")
 
     def test_editor_defers_native_files(self):
         self.add_remote_commit("Config/DefaultEngine.ini", "[Test]")
