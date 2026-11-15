@@ -194,7 +194,7 @@ def _get_hit(world, x, y, center, extent, names):
     actor, normal, point = result
     if actor.get_path_name() not in names or normal.z < 0.82:
         return None
-    return point
+    return point, normal
 
 
 def _generate(world, surfaces, plans, seed):
@@ -210,14 +210,18 @@ def _generate(world, surfaces, plans, seed):
                 # Jitter by at most 5%, preserving carpet footprint overlap.
                 x = start_x + (i + 0.5 + rng.uniform(-.05, .05)) * grid.step_x
                 y = start_y + (j + 0.5 + rng.uniform(-.05, .05)) * grid.step_y
-                point = _get_hit(world, x, y, center, bounds, names)
-                if point is None:
+                hit = _get_hit(world, x, y, center, bounds, names)
+                if hit is None:
                     continue
-                # Keep blades constant world height when X/Y varies slightly.
+                point, normal = hit
+                # Align blades with the ground normal on rolling terrain.
+                # This prevents the 2.6m footprint hovering above a hillside.
+                rotation = unreal.MathLibrary.make_rot_from_z(normal)
+                rotation.yaw += rng.uniform(-8, 8)
                 size = rng.uniform(0.97, 1.06)
                 buffer.append(unreal.Transform(
                     location=unreal.Vector(point.x, point.y, point.z - 1.5),
-                    rotation=unreal.Rotator(0, rng.uniform(-8, 8), 0),
+                    rotation=rotation,
                     scale=unreal.Vector(size, size, rng.uniform(0.85, 1.17))))
                 if len(buffer) >= 2500:
                     yield buffer
