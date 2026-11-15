@@ -217,8 +217,8 @@ def _generate(world, surfaces, plans, seed):
                 # Align blades with the ground normal on rolling terrain.
                 # This prevents the 2.6m footprint hovering above a hillside.
                 rotation = unreal.MathLibrary.make_rot_from_z(normal)
-                rotation.yaw += rng.uniform(-8, 8)
-                size = rng.uniform(0.97, 1.06)
+                rotation.yaw += rng.uniform(-180, 180)
+                size = rng.uniform(0.96, 1.11)
                 buffer.append(unreal.Transform(
                     location=unreal.Vector(point.x, point.y, point.z - 1.5),
                     rotation=rotation,
