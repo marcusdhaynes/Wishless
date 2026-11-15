@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "id": "wishless-grass-mesh-20261115",
+  "description": "Import the lightweight source grass mesh into Unreal-generated vegetation.",
+  "operations": [
+    {
+      "type": "ensure_folder",
+      "path": "/Game/WishlessGenerated/Vegetation"
+    },
+    {
+      "type": "import_asset",
+      "source": "SourceAssets/Vegetation/SM_WishlessGrass.obj",
+      "destination": "/Game/WishlessGenerated/Vegetation",
+      "asset_name": "SM_WishlessGrass"
+    }
+  ]
+}
