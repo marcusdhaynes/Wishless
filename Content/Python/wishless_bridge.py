@@ -29,6 +29,10 @@ def _apply_operation(op: dict) -> None:
     if op["type"] == "ensure_folder":
         unreal.EditorAssetLibrary.make_directory(op["path"])
         return
+    if op["type"] == "scatter_grass":
+        from wishless_grass import scatter_grass
+        scatter_grass(op)
+        return
     if op["type"] == "import_asset":
         source = (ROOT / op["source"]).resolve()
         if not source.is_relative_to(SOURCE.resolve()) or not source.is_file():
@@ -60,12 +64,17 @@ def process_queue() -> None:
     for item in sorted(QUEUE.glob("*.json")):
         try:
             digest = hashlib.sha256(item.read_bytes()).hexdigest()
-            if applied.get(item.name) == digest:
-                continue
+            # Grass is applied once per loaded map, not once per entire project.
+            # Opening a different level can therefore apply the same declaration.
             manifest = load_manifest(item)
+            has_grass = any(op["type"] == "scatter_grass" for op in manifest["operations"])
+            world_name = unreal.EditorLevelLibrary.get_editor_world().get_path_name()
+            applied_key = item.name + "::" + world_name if has_grass else item.name
+            if applied.get(applied_key) == digest:
+                continue
             for op in manifest["operations"]:
                 _apply_operation(op)
-            applied[item.name] = digest
+            applied[applied_key] = digest
             _save_json(path, applied)
             unreal.log(f"[WishlessBridge] Applied: {manifest['id']}")
         except Exception as exc:
