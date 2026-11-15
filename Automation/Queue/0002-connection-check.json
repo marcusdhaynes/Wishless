@@ -1,0 +1,5 @@
+{
+  "schema_version": 1,
+  "id": "wishless-connection-check-20261115",
+  "operations": [{"type": "ensure_folder", "path": "/Game/WishlessGenerated/ConnectionCheck"}]
+}
