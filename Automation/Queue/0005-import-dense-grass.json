@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "id": "wishless-grass-carpet-mesh-20261115",
+  "description": "Import tightly packed 96-triangle grass carpet patch, optimized for instance reuse.",
+  "operations": [
+    {
+      "type": "ensure_folder",
+      "path": "/Game/WishlessGenerated/Vegetation"
+    },
+    {
+      "type": "import_asset",
+      "source": "SourceAssets/Vegetation/SM_WishlessGrassCarpet.obj",
+      "destination": "/Game/WishlessGenerated/Vegetation",
+      "asset_name": "SM_WishlessGrassCarpet"
+    }
+  ]
+}
