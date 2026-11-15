@@ -1,0 +1,6 @@
+{
+  "schema_version": 1,
+  "id": "wishless-bootstrap-0001",
+  "description": "Register generated-content folder in Unreal Editor.",
+  "operations": [{"type": "ensure_folder", "path": "/Game/WishlessGenerated"}]
+}

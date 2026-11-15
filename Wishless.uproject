@@ -1,0 +1,9 @@
+{
+  "FileVersion": 3,
+  "Category": "Games",
+  "Description": "Wishless UE5 project synchronized through GitHub.",
+  "Plugins": [
+    {"Name":"PythonScriptPlugin","Enabled":true},
+    {"Name":"EditorScriptingUtilities","Enabled":true}
+  ]
+}

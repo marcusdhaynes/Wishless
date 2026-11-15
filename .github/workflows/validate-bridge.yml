@@ -1,0 +1,26 @@
+name: Wishless Bridge Validation
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validate project and manifests
+        run: |
+          python -m json.tool Wishless.uproject > /dev/null
+          python tools/validate_queue.py
+          python -m compileall -q tools Content/Python tests
+      - name: Test one-way Git sync safeguards
+        run: python -m unittest discover -s tests -v
