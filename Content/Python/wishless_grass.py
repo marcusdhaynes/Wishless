@@ -7,8 +7,11 @@ Unreal editor, never in a cooked game. Caller tracks completion per map.
 from __future__ import annotations
 
 import hashlib
+import json
 import math
+import os
 import random
+from pathlib import Path
 
 import unreal
 
@@ -176,9 +179,35 @@ def scatter_grass(operation: dict) -> int:
             "Grass placement found no eligible terrain hits: verify Landscape/ground "
             "collision responds to Visibility, and terrain is not covered by blockers")
 
+    # Crash/failed-save guard: never replay a partially successful foliage
+    # insertion every three seconds. A failed write stays blocked for review.
+    guard_dir = Path(unreal.Paths.project_saved_dir()) / "WishlessBridge" / "grass_guards"
+    guard_dir.mkdir(parents=True, exist_ok=True)
+    world_id = hashlib.sha256(world.get_path_name().encode("utf-8")).hexdigest()
+    guard = guard_dir / (world_id + ".json")
+    if guard.is_file():
+        previous = json.loads(guard.read_text(encoding="utf-8"))
+        if previous.get("state") == "saved":
+            unreal.log("[WishlessGrass] Previously saved; no duplicate foliage added")
+            return previous.get("count", 0)
+        raise RuntimeError(
+            "A previous grass placement was interrupted/unsaved. Inspect the "
+            "current map and Saved/WishlessBridge/grass_guards before retrying.")
+
+    def record(state):
+        temp = guard.with_suffix(".tmp")
+        temp.write_text(json.dumps({
+            "state": state, "map": world.get_path_name(),
+            "mesh": operation["mesh"], "count": len(transforms)}, indent=2), encoding="utf-8")
+        os.replace(temp, guard)
+
+    record("started")
     unreal.InstancedFoliageActor.add_instances(world, foliage, transforms)
     if not unreal.EditorLevelLibrary.save_current_level():
-        raise RuntimeError("Placed grass but the current UE level could not be saved")
+        raise RuntimeError(
+            "Grass inserted but level save failed. Automatic retries blocked to "
+            "prevent duplicate instances; save/inspect the level manually.")
+    record("saved")
     unreal.log("[WishlessGrass] Placed and saved {} foliage clumps in {} ({} surfaces)".format(
         len(transforms), world.get_path_name(), len(surfaces)))
     return len(transforms)
